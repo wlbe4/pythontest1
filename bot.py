@@ -5,14 +5,15 @@ import collections
 # Auto-generated code below aims at helping you parse
 # the standard input according to the problem statement.
 sites = {}
+mines = {}
 distanesFromBase = collections.OrderedDict()
 bCalcDistFromBase = True
 num_sites = int(input())
 target_units=20
-nKnights = int(0.5+0.2*(num_sites/2))
-nArchers = int(0.5+0.2*(num_sites/2))
+nKnights = int(0.5+0.25*(num_sites/2))
+nArchers = int(0.5+0.25*(num_sites/2))
 nGiants  = 0 #int(0.5+0.3*(num_sites/2))
-nTowers  = int(0.5+0.2*(num_sites/2))
+nTowers  = int(0.5+0.25*(num_sites/2))
 nTotalTargetSites = nKnights + nArchers + nGiants + nTowers
 bBuildTower = False
 firstTowerSite = 0
@@ -31,7 +32,8 @@ def build_giant(siteId):
     print("BUILD %d BARRACKS-GIANT"%siteId)
 def build_tower(siteId):
     print("BUILD %d TOWER"%siteId)
-    
+def build_mine(siteId):
+    print("BUILD %d MINE"%siteId)    
 def move_to(x,y):
     print("MOVE %d %d"%(x,y))
 def log(msg):
@@ -51,6 +53,14 @@ def move_nearest(pos):
     move_to(ns["pos"][0], ns["pos"][1])
 
 lastTrained = 0    
+def check_mines():
+    for m in mines:
+        if(mines[m] < 3):
+            build_mine(m)
+            mines[m] = mines[m] + 1
+            return 0
+    return 1
+    
 # game loop
 while True:
     train_sites = ""
@@ -129,17 +139,21 @@ while True:
         knights = []
         archers = []
         all_creeps = {}
-        for i in range(nTotalTargetSites,0,-1): # start from far to near
+        for i in range(nTotalTargetSites,1,-1): # start from far to near
             if(len(towers) < nTowers):
-                towers.append(distanesFromBase[i-1])
-                all_creeps[distanesFromBase[i-1]["id"]] = "t"
+                towers.append(distanesFromBase[i])
+                all_creeps[distanesFromBase[i]["id"]] = "t"
             elif(len(archers) < nArchers):
-                archers.append(distanesFromBase[i-1])
-                all_creeps[distanesFromBase[i-1]["id"]] = "a"
+                archers.append(distanesFromBase[i])
+                all_creeps[distanesFromBase[i]["id"]] = "a"
             elif(len(knights) < nKnights):
-                knights.append(distanesFromBase[i-1])
-                all_creeps[distanesFromBase[i-1]["id"]] = "k"
+                knights.append(distanesFromBase[i])
+                all_creeps[distanesFromBase[i]["id"]] = "k"
         #log("distanesFromBase: %s"%distanesFromBase)
+        all_creeps[distanesFromBase[0]["id"]] = "m"
+        all_creeps[distanesFromBase[1]["id"]] = "m"
+        mines[distanesFromBase[0]["id"]] = 0
+        mines[distanesFromBase[1]["id"]] = 0
         log("towers = %s"%towers)
         log("knights = %s"%knights)
         log("archers = %s"%archers)
@@ -151,6 +165,8 @@ while True:
     #if(total_knights + total_archers < target_units and total_own_sites < num_sites/2):
     if(total_own_sites < nTotalTargetSites): # Need to build more sites
         bNeedBuild = True
+        if(not check_mines()):
+            bNeedBuild = False
         if(bNeedBuild and
             touched_site in all_creeps and
             lastBuilt != touched_site
@@ -160,7 +176,10 @@ while True:
                 if(all_creeps[touched_site] == 'a'):
                     build_archer(touched_site)
                 if(all_creeps[touched_site] == 'k'):
-                    build_knight(touched_site)               
+                    build_knight(touched_site)   
+                if(all_creeps[touched_site] == 'm'):
+                    build_mine(touched_site)
+                    mines[touched_site] = 1
                 #print("WAIT")
                 lastBuilt = touched_site
                 bNeedBuild = False
@@ -192,9 +211,11 @@ while True:
         if(touched_site == lastBuilt):
             buildCounter += 1
         if(bNeedBuild):
+            if(check_mines()):
+                print("WAIT")
+    else:
+        if(check_mines()):
             print("WAIT")
-    else:    
-        print("WAIT")
     ''' - Prev code
     if(total_own_sites < nTotalTargetSites): # Need to build more sites
         if(touched_site == -1 or sites[touched_site]["owner"] == 0):
