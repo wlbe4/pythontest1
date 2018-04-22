@@ -9,10 +9,10 @@ distanesFromBase = collections.OrderedDict()
 bCalcDistFromBase = True
 num_sites = int(input())
 target_units=20
-nKnights = int(0.5+0.3*(num_sites/2))
-nArchers = int(0.5+0.3*(num_sites/2))
+nKnights = int(0.5+0.2*(num_sites/2))
+nArchers = int(0.5+0.2*(num_sites/2))
 nGiants  = 0 #int(0.5+0.3*(num_sites/2))
-nTowers  = int(0.5+0.3*(num_sites/2))
+nTowers  = int(0.5+0.2*(num_sites/2))
 nTotalTargetSites = nKnights + nArchers + nGiants + nTowers
 bBuildTower = False
 firstTowerSite = 0
@@ -35,8 +35,8 @@ def build_tower(siteId):
 def move_to(x,y):
     print("MOVE %d %d"%(x,y))
 def log(msg):
-    pass
-    #print("Debug: %s"%msg, file=sys.stderr)
+    #pass
+    print("Debug: %s"%msg, file=sys.stderr)
     
 def move_nearest(pos):
     min_dist = 10000.0 # Just a big number
@@ -128,24 +128,43 @@ while True:
         towers = []
         knights = []
         archers = []
+        all_creeps = {}
         for i in range(nTotalTargetSites,0,-1): # start from far to near
             if(len(towers) < nTowers):
                 towers.append(distanesFromBase[i-1])
+                all_creeps[distanesFromBase[i-1]["id"]] = "t"
             elif(len(archers) < nArchers):
                 archers.append(distanesFromBase[i-1])
+                all_creeps[distanesFromBase[i-1]["id"]] = "a"
             elif(len(knights) < nKnights):
                 knights.append(distanesFromBase[i-1])
+                all_creeps[distanesFromBase[i-1]["id"]] = "k"
         #log("distanesFromBase: %s"%distanesFromBase)
         log("towers = %s"%towers)
         log("knights = %s"%knights)
         log("archers = %s"%archers)
-         
+        log("all_creeps = %s"%all_creeps)
+     
     # Write an action using print
     # To debug:
     log("total_knights: %s total_archers: %s num of units: %s"%(total_knights,total_archers,num_units))
     #if(total_knights + total_archers < target_units and total_own_sites < num_sites/2):
     if(total_own_sites < nTotalTargetSites): # Need to build more sites
         bNeedBuild = True
+        if(bNeedBuild and
+            touched_site in all_creeps and
+            lastBuilt != touched_site
+            and sites[touched_site]["owner"] != 0):
+                if(all_creeps[touched_site] == 't'):
+                    build_tower(touched_site)
+                if(all_creeps[touched_site] == 'a'):
+                    build_archer(touched_site)
+                if(all_creeps[touched_site] == 'k'):
+                    build_knight(touched_site)               
+                #print("WAIT")
+                lastBuilt = touched_site
+                bNeedBuild = False
+    
         if(bNeedBuild and buildCounter%3 == 0):
             for t in knights:
                 if(t["site"]["owner"] != 0):
@@ -167,10 +186,13 @@ while True:
                     build_tower(t["id"])
                     bNeedBuild = False
                     break
+        #log("touched_site = %s lastBuilt = %s  touched_site in all_creeps: %s"%(touched_site,lastBuilt,touched_site in all_creeps))
+        #if(touched_site in all_creeps):
+        #   log("bNeedBuild %s all_creeps[touched_site] = %s"%(bNeedBuild,all_creeps[touched_site]))
         if(touched_site == lastBuilt):
             buildCounter += 1
         if(bNeedBuild):
-        print("WAIT")
+            print("WAIT")
     else:    
         print("WAIT")
     ''' - Prev code
