@@ -27,7 +27,7 @@ UNIT_ARCHER         =  1
 UNIT_GIANT          =  2
 my_base_pos         = [-1,-1]
 b_enable_log        = True
-
+game_state          = BUILD_MINE_STATE
 
 # Auto-generated code below aims at helping you parse
 # the standard input according to the problem statement.
@@ -43,7 +43,8 @@ for i in range(num_sites):
                     "creep_type":-1,
                     "gold_remaining":-1,
                     "max_mine_size":-1,
-                    "structure_type":-1
+                    "structure_type":-1,
+                    "gold_mines_count":0
                     } )
     site_ids[site_id] = i
 
@@ -77,18 +78,39 @@ def log(msg):
 
 def build_sorted_sites_by_distances():
     if(len(sites_ordered_distances) == 0):
+        log("Call build_sorted_sites_by_distances")
         for s in range(len(sites)):
             sites[s]["dist_from_start"] = int(distance(my_base_pos,sites[s]["pos"]))
         for x in sorted (sites, key=itemgetter ('dist_from_start')):
             sites_ordered_distances.append(x)
             log(x)
-        #log(sites)
-        #log(sites_ordered_distances)
 
-def game_logic():
+def game_logic(gold, touched_site):
+    global game_state,sites_ordered_distances
     build_sorted_sites_by_distances() # This function will only run once
-    #print("WAIT")
-    print("MOVE 413 603")
+    if(game_state == BUILD_MINE_STATE): # Initially, build the gold miners
+        b_mine_build = False
+        idx = 0 # Use as index to modify list entry
+        for s in sites_ordered_distances:
+            log("idx = %s"%idx)
+            if(s["gold_remaining"] > 0): 
+                if(s["max_mine_size"] > 1 and s["max_mine_size"] != s["gold_mines_count"]): # Take only miners that are bigger than 1
+                    if(touched_site == s["site_id"]):
+                        print("BUILD %s MINE"%s["site_id"])
+                        sites_ordered_distances[idx]["gold_mines_count"] += 1
+                    else:
+                        print("MOVE %s %s"%(s["pos"][0],s["pos"][1]))
+                    b_mine_build = True
+                    break
+            else:
+                break # Stop after the first group of mines (they are always close to base so they are first in list)
+            idx += 1
+        if(not b_mine_build):
+            game_state = BUILD_STATE
+    
+    if(game_state == BUILD_STATE):
+        print("WAIT")
+    #print("MOVE 413 603")
     print("TRAIN")
 
 
@@ -122,4 +144,4 @@ while True:
     # Second line: A set of training instructions
     #print("WAIT")
     #print("TRAIN")
-    game_logic()
+    game_logic(gold, touched_site)
