@@ -48,14 +48,21 @@ for i in range(num_sites):
                     } )
     site_ids[site_id] = i
 
+def log(msg):
+    if(b_enable_log):
+        print("Debug: %s"%msg, file=sys.stderr)
+        
 def update_sites(site_id, gold_remaining, max_mine_size, structure_type, owner, param_1, param_2):
+    global sites    
     i = site_ids[site_id]
+    log("i = %s site_id = %s gold_remaining = %s"%(i,site_id,gold_remaining)) 
     sites[i]['gold_remaining'] = gold_remaining
     sites[i]['max_mine_size'] = max_mine_size
     sites[i]['structure_type'] = structure_type
     sites[i]['owner'] = owner
     sites[i]['turns_before_new_set'] = param_1
     sites[i]['creep_type'] = param_2
+    if(owner == OWNER_NONE):  sites[i]['gold_mines_count'] = 0
 
 def clear_units_list():
     units = [] # Clear prev units list
@@ -72,9 +79,6 @@ def update_units(x, y, owner, unit_type, health):
 def distance(pos1,pos2):
     return math.sqrt((pos1[0]-pos2[0])**2+(pos1[1]-pos2[1])**2)
 
-def log(msg):
-    if(b_enable_log):
-        print("Debug: %s"%msg, file=sys.stderr)
 
 def build_sorted_sites_by_distances():
     if(len(sites_ordered_distances) == 0):
@@ -83,7 +87,7 @@ def build_sorted_sites_by_distances():
             sites[s]["dist_from_start"] = int(distance(my_base_pos,sites[s]["pos"]))
         for x in sorted (sites, key=itemgetter ('dist_from_start')):
             sites_ordered_distances.append(x)
-            log(x)
+            #log(x)
 
 def game_logic(gold, touched_site):
     global game_state,sites_ordered_distances
