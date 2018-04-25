@@ -2,7 +2,12 @@ import sys
 import math
 from collections import OrderedDict
 from operator import itemgetter
-
+'''
+Issues: 
+1. Many mines are built
+2. Some times stuck between 2 sites like a ping pong
+3. When enemy creeps touch my site I have just built, I am stuck in a loop building again and they destroy again...
+'''
 units = []
 sites = []
 
